@@ -1,4 +1,15 @@
 const express = require("express");
+const Joi = require("joi");
+
+const schema = Joi.object({
+  name: Joi.string().min(3).max(30).required(),
+
+  email: Joi.string()
+    .email({ minDomainSegments: 2, tlds: { allow: ["com", "net"] } })
+    .required(),
+
+  phone: Joi.string().min(8).max(12).required(),
+});
 
 const router = express.Router();
 
@@ -22,17 +33,27 @@ router.get("/", async (req, res, next) => {
 router.get("/:contactId", async (req, res, next) => {
   const { contactId } = req.params;
   const data = await getContactById(contactId.slice(1));
-  res.json({
-    status: "success",
-    code: 200,
-    data,
-  });
+
+  res.json(data);
 });
 
 router.post("/", async (req, res, next) => {
-  // Якщо в body немає якихось обов'язкових полів, повертає json з ключем {"message": "missing required name field"} і статусом 400
+  const { name, email, phone } = req.body;
 
-  const data = await addContact(req.body);
+  const { error, value } = await schema.validate({
+    name,
+    email,
+    phone,
+  });
+
+  if (error) {
+    return res.json({
+      status: 400,
+      message: "missing required field",
+    });
+  }
+
+  const data = await addContact(value);
 
   res.json({
     status: "success",
@@ -44,26 +65,19 @@ router.post("/", async (req, res, next) => {
 router.delete("/:contactId", async (req, res, next) => {
   const data = await removeContact(req.params.contactId.slice(1));
 
-  console.log("Data: ", data);
-
   res.json(data);
 });
 
 router.put("/:contactId", async (req, res, next) => {
-  const id = req.params.contactId.slice(1);
+  const contactId = req.params.contactId.slice(1);
   const { name, email, phone } = req.body;
 
   if (name === "" || email === "" || phone === "") {
     return res.json({ code: 400, message: "missing fields" });
   }
 
-  const data = await updateContact(id, req.body);
-
-  res.json({
-    status: "success",
-    code: 200,
-    data,
-  });
+  const data = await updateContact(contactId, req.body);
+  res.json(data);
 });
 
 module.exports = router;

@@ -13,9 +13,17 @@ const getContactById = async (contactId) => {
   const contacts = await listContacts();
   const result = contacts.find((item) => item.id === contactId);
 
-  // якщо такого id немає, повертає json з ключем "message": "Not found" і статусом 404
+  if (!result)
+    return {
+      code: 404,
+      message: "Not found",
+    };
 
-  return result || null;
+  return {
+    status: "success",
+    code: 200,
+    data: result,
+  };
 };
 
 const addContact = async (body) => {
@@ -44,6 +52,7 @@ const removeContact = async (contactId) => {
   }
 
   await fs.writeFile(contactsPath, JSON.stringify(newContacts, null, 2));
+
   return {
     status: "success",
     code: 200,
@@ -52,21 +61,23 @@ const removeContact = async (contactId) => {
 };
 
 const updateContact = async (contactId, body) => {
-  const { id, name, email, phone } = body;
+  const { name, email, phone } = body;
   const contacts = await listContacts();
-
   const index = contacts.findIndex((item) => item.id === contactId);
 
-  // В іншому випадку, повертає json з ключем "message": "Not found" і статусом 404
-  // res.json({ code: 404, message: "Not found" });
-  if (index === -1) return null;
+  if (index === -1) {
+    return { code: 404, message: "Not found" };
+  }
 
-  contacts[index] = { id, name, email, phone };
+  contacts[index] = { contactId, name, email, phone };
+
   await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
 
-  console.log("Update Cont: ", contacts[index]);
-
-  return contacts[index];
+  return {
+    status: "success",
+    code: 200,
+    data: contacts[index],
+  };
 };
 
 module.exports = {
