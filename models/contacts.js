@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
 const path = require("path");
 const { nanoid } = require("nanoid");
+const { HttpError } = require("../helpers/index");
 
 const contactsPath = path.join(__dirname, "./contacts.json");
 
@@ -11,19 +12,7 @@ const listContacts = async () => {
 
 const getContactById = async (contactId) => {
   const contacts = await listContacts();
-  const result = contacts.find((item) => item.id === contactId);
-
-  if (!result)
-    return {
-      code: 404,
-      message: "Not found",
-    };
-
-  return {
-    status: "success",
-    code: 200,
-    data: result,
-  };
+  return contacts.find((item) => item.id === contactId);
 };
 
 const addContact = async (body) => {
@@ -48,16 +37,12 @@ const removeContact = async (contactId) => {
   const newContacts = contacts.filter((item) => item.id !== contactId);
 
   if (contacts.length === newContacts.length) {
-    return { code: 404, message: "Not found" };
+    throw HttpError(404, "Not found");
   }
 
   await fs.writeFile(contactsPath, JSON.stringify(newContacts, null, 2));
 
-  return {
-    status: "success",
-    code: 200,
-    message: "Contact deleted",
-  };
+  return { message: "Contact deleted" };
 };
 
 const updateContact = async (contactId, body) => {
@@ -69,15 +54,11 @@ const updateContact = async (contactId, body) => {
     return { code: 404, message: "Not found" };
   }
 
-  contacts[index] = { contactId, name, email, phone };
+  contacts[index] = { id: contactId, name, email, phone };
 
   await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
 
-  return {
-    status: "success",
-    code: 200,
-    data: contacts[index],
-  };
+  return contacts[index];
 };
 
 module.exports = {
