@@ -20,12 +20,10 @@ const transport = nodemailer.createTransport(nodemailerConfig);
 
 const sendEmail = async (data) => {
   try {
-    const email = { ...data, from: "anton.palienko@meta.ua" };
+    const email = { ...data, from: "joanne.dickens@ethereal.email" };
     await transport.sendMail(email);
-    console.log("Email: ", email);
     return true;
   } catch (error) {
-    console.log(error.message);
     throw error;
   }
 };
